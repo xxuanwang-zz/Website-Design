@@ -1,0 +1,83 @@
+<html>
+<head>
+   <title> Report Description </title>
+   <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+   <style>
+       body
+       {
+           color:white;
+           text-align:center;
+           font-weight: bold;
+           font-size: 20px;
+           line-height: 1.6;
+           font-family:fantasy;
+           background-image:url("images/background.jpg");
+        }
+    </style>
+</head>
+<body>
+<div class="w3-card-4 w3-display-middle" style="width:70%; background-image:linear-gradient(#262121,#4d2933,#020108,#230e0c);">
+
+<?php
+        $link = mysqli_connect("localhost","ufo","inf385", "ufo");
+
+        if (trim($_GET['UID'] == NULL)){
+            echo "Please <a href='sign-in.php'>sign in/up</a> first. Thank you!";
+            exit;}
+        else {
+            $userid = trim($_GET['UID']);
+      
+            $sql1 = "SELECT Summary, UserName, State, City, Duration, Date, Time FROM User RIGHT JOIN Report ON Report.UserID=User.UserID RIGHT JOIN UFO ON Report.ReportID=UFO.ReportID LEFT JOIN Date ON UFO.TimeID=Date.TimeID LEFT JOIN Location ON UFO.LocationID=Location.LocationID LEFT JOIN Shape ON UFO.ShapeID=Shape.ShapeID WHERE User.UserID = $userid";
+            $query1 = mysqli_query($link, $sql1);
+            $row = mysqli_num_rows($query1) ;// Get the number of rows
+            $result = mysqli_fetch_assoc($query1);
+            echo "Account Info for "."$result[UserName]"." are as follow: <br/>";
+            if (mysqli_num_rows($query1) == 0){
+                   echo "Complete your first UFO sighting entry form <a href='ufo-form.php?UID=$userid'>here</a>!";
+                   exit;
+            }else{
+ 
+            $pagesize = 10;
+            $pagenum = ceil($row/$pagesize); // Total pages we have for the signed-in user
+
+            if ( isset($_GET['page']) && $_GET['page'] >1) {
+                    $pageVal = $_GET['page'];
+            }else {
+                    $pageVal = 1;
+            } // Test if the page("1, 2, 3, ...., lastpage") has been submit or not
+              // Get the page value
+            $page = ($pageVal - 1) * $pagesize; // The starting position of the intercepted records
+
+            $sql2 = "SELECT Summary, State, City, Duration, Date, Time FROM User RIGHT JOIN Report ON Report.UserID=User.UserID RIGHT JOIN UFO ON Report.ReportID=UFO.ReportID LEFT JOIN Date ON UFO.TimeID=Date.TimeID LEFT JOIN Location ON UFO.LocationID=Location.LocationID LEFT JOIN Shape ON UFO.ShapeID=Shape.ShapeID WHERE User.UserID=$userid limit $page, $pagesize";
+            $query2 = mysqli_query($link, $sql2);
+            $rows = mysqli_num_rows($query2) ;// The number of records on each page is 10
+
+            echo "<table style = 'text-align:center;' border = '1'><tr><th>Date</th><th>Time</th><th>State</th><th>City</th><th>Duration</th><th>Summary</th></tr>";
+            for($i = 0; $i < $rows; $i++){
+                   $userinfo=mysqli_fetch_assoc($query2);
+                   $Date = $userinfo['Date']; 
+                   $Time = $userinfo['Time'];
+                   $State = $userinfo['State']; 
+                   $City = $userinfo['City']; 
+                   $Duration = $userinfo['Duration']; 
+                   $Summary = $userinfo['Summary']; 
+                   echo "<tr><td>$Date</td><td>$Time</td><td>$State</td><td>$City</td><td>$Duration</td><td>$Summary</td></tr>";
+            }
+            // Use the sign-in userid to find all the remaining data
+            echo "</table>";
+            echo "".$row." entries<br />";
+        }}
+
+        $prepg=$pageVal-1; // Previous Page
+	$nextpg=$pageVal+1; // Next page
+	echo "<a href='?page=$prepg&UID=$userid'>Previous Page</a>";
+	for($i=1;$i<=$pagenum;$i++){
+	   echo "<a href='?page=$i&UID=$userid'>&nbsp$i&nbsp</a>";
+	}
+	echo "<a href='?page=$nextpg&UID=$userid'>Next Page</a><br /> ";
+        echo "Back to the <a href='homepage.php?UID=$userid'>homepage</a><br />";
+        mysqli_close($link);
+?>
+Currently on page <?php echo $pageVal;?>.  A total of <?php echo $pagenum; ?> pages.
+</body>
+</html>
